@@ -1,6 +1,10 @@
 import java.sql.*;
 import java.util.ArrayList;
 import javax.swing.*;
+
+import model.home;
+import model.home2;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -43,51 +47,49 @@ public class DBConnection extends JFrame{
 		{
 			System.out.println("MySQL 서버 연동 실패" + e.toString());
 		}
-		String enteredID = idField.getText();
-		String enteredPW = new String(pwField.getPassword());
-		 try {
-	  
-
-	         // SQL 쿼리
-	         String sql = "SELECT * FROM inje WHERE id = ? AND pass = ?";
-	         pstmt = con.prepareStatement(sql);
-	         pstmt.setString(1, enteredID);
-	         pstmt.setString(2, enteredPW);
-
-	         // 쿼리 실행
-	         rs = pstmt.executeQuery();
-
-	         // 결과 확인
-	         if (rs.next()) {
-	             // 일치하는 사용자가 존재하면 로그인 성공
-	             JOptionPane.showMessageDialog(frame, "로그인에 성공했습니다.");
-
-	             frame.dispose();
-	             home.main(new String[0]);
-	         } else {
-	             // 일치하는 사용자가 없으면 로그인 실패
-	             JOptionPane.showMessageDialog(frame, "로그인에 실패했습니다. 올바른 ID와 PW를 입력하세요.");
-	         }
-	     } 
-		 catch (SQLException ex) {
-	         ex.printStackTrace();
-	         JOptionPane.showMessageDialog(frame, "로그인 중 오류가 발생했습니다.");
-	     } finally {
-	         // 연결 및 리소스 해제
-	         try {
-	             if (rs != null) rs.close();
-	             if (pstmt != null) pstmt.close();
-	             if (con != null) con.close();
-	         } catch (SQLException ex) {
-	             ex.printStackTrace();
-	         }
-	     }
-		 
-	 }
-	   
+	}
+	public boolean isUser(String userId , String userPass)
+	{
+		String sql = "SELECT * FROM user WHERE id = ? AND pass = ?";
 		
+		try
+		{
+			PreparedStatement pstmt = con.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			pstmt.setString(2, userPass);
+			
+			ResultSet rs = pstmt.executeQuery();
+			
+			return rs.next();
+		}catch (Exception e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+	}
+	   
+		public boolean addUser(String username, String password, String name, String department, String email, String phone)
+		{
+			 String sql = "INSERT INTO user (id, pass, name, department, email, phone) VALUES (?, ?, ?, ?, ?, ?)";
+			 
+			 try {
+				 PreparedStatement pstmt = con.prepareStatement(sql);
+			        pstmt.setString(1, username);
+			        pstmt.setString(2, password);
+			        pstmt.setString(3, name);
+			        pstmt.setString(4, department);
+			        pstmt.setString(5, email);
+			        pstmt.setString(6, phone);
+				 
+			        int rowsAffected = pstmt.executeUpdate();
+			        return rowsAffected > 0;
+			 }catch (Exception e) {
+				 e.printStackTrace();
+					return false;
+		}
+	}
 
-	
+		
 
 	
 	public static void main(String[] args) {
@@ -136,20 +138,28 @@ public class DBConnection extends JFrame{
 
 
 	    JPanel signupPanel = new JPanel();
-	    signupPanel.setLayout(new GridLayout(6, 2));
+	    signupPanel.setLayout(new GridLayout(8, 2));
 	    signupPanel.setVisible(isSignupFormVisible);
-
-	    JLabel studentNoLabel = new JLabel("학번:");
-	    JTextField studentNoField = new JTextField(15);
-
+	    
+	    JLabel signupIdLabel = new JLabel("ID:");
+	    JTextField signupIdField = new JTextField(15);
+	    
+	    JLabel signupPwLabel = new JLabel("PW:");
+	    JPasswordField signupPwField = new JPasswordField(15);
+	    
 	    JLabel nameLabel = new JLabel("이름:");
 	    JTextField nameField = new JTextField(15);
 
-	    JLabel signupIdLabel = new JLabel("ID:");
-	    JTextField signupIdField = new JTextField(15);
 
-	    JLabel signupPwLabel = new JLabel("PW:");
-	    JPasswordField signupPwField = new JPasswordField(15);
+	    JLabel numberNoLabel = new JLabel("번호:");
+	    JTextField numberNoField = new JTextField(15);
+
+	    JLabel department = new JLabel("소속:");
+	    JTextField departmentField = new JTextField(15);
+
+	    JLabel email = new JLabel("이메일:");
+	    JTextField emailField = new JTextField(15);
+
 
 	    JLabel confirmPasswordLabel = new JLabel("비밀번호 확인:");
 	    JPasswordField confirmPasswordField = new JPasswordField(15);
@@ -159,16 +169,21 @@ public class DBConnection extends JFrame{
 	    signupConfirmPanel.add(new JLabel(""));
 	    signupConfirmPanel.add(signupConfirmButton);
 	    
-	    signupPanel.add(studentNoLabel);
-	    signupPanel.add(studentNoField);
-	    signupPanel.add(nameLabel);
-	    signupPanel.add(nameField);
 	    signupPanel.add(signupIdLabel);
 	    signupPanel.add(signupIdField);
 	    signupPanel.add(signupPwLabel);
 	    signupPanel.add(signupPwField);
 	    signupPanel.add(confirmPasswordLabel);
 	    signupPanel.add(confirmPasswordField);
+	    signupPanel.add(nameLabel);
+	    signupPanel.add(nameField);
+	    signupPanel.add(department);
+	    signupPanel.add(departmentField);
+	    signupPanel.add(email);
+	    signupPanel.add(emailField);
+	    signupPanel.add(numberNoLabel);
+	    signupPanel.add(numberNoField);
+	   
 	    signupPanel.add(new JLabel(""));
 	    signupPanel.add(signupConfirmPanel);
 
@@ -193,7 +208,58 @@ public class DBConnection extends JFrame{
 	            frame.revalidate();
 	        }
 	    });
+	    loginConfirmButton.addActionListener(new ActionListener() {
+	        @Override
+	        public void actionPerformed(ActionEvent e) {
+	            String userId = idField.getText();
+	            String userPass = new String(pwField.getPassword());
 
+	            DBConnection dbConnection = new DBConnection();
+	            dbConnection.connect();
+	            
+	            boolean isAuthenticated = dbConnection.isUser(userId, userPass);
+	            
+	            if (isAuthenticated) {
+	                // 성공적인 로그인 시, 새 창을 열거나 다른 작업을 수행할 수 있습니다.
+	                JOptionPane.showMessageDialog(frame, "로그인 성공!");
+	                frame.dispose();
+	                home2.main(new String[0]);
+	            } else {
+	                // 로그인 실패 시 오류 메시지를 표시합니다.
+	                JOptionPane.showMessageDialog(frame, "로그인 실패.");
+	            }
+	        }
+	      
+	    });
+	    signupConfirmButton.addActionListener(new ActionListener() {
+	    	 @Override
+	    	 public void actionPerformed(ActionEvent e)
+	    	 {
+	    		   // 사용자가 입력한 정보 가져오기
+	    		  String username = signupIdField.getText();
+	    	        String password = new String(signupPwField.getPassword());
+	    	        String name = nameField.getText();
+	    	        String department = departmentField.getText();
+	    	        String email = emailField.getText();
+	    	        String phone = numberNoField.getText();
+	    	        // 데이터베이스에 연결
+	    	        DBConnection dbConnection = new DBConnection();
+	    	        dbConnection.connect();
+
+	    	        // 사용자 정보를 데이터베이스에 추가
+	    	        boolean isSuccess = dbConnection.addUser(username, password, name ,department ,email , phone );
+
+	    	        if (isSuccess) {
+	    	            // 회원가입 성공 메시지
+	    	            JOptionPane.showMessageDialog(frame, "회원가입 성공!");
+	    	        } else {
+	    	            // 회원가입 실패 메시지
+	    	            JOptionPane.showMessageDialog(frame, "회원가입 실패. 다시 시도하세요.");
+	    	        }
+	    	    }
+	    	 
+	    	
+	    });
 	    constraints.gridx = 0;
 	    constraints.gridy = 0;
 	    frame.add(imageLabel, constraints);
