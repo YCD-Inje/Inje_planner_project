@@ -1,10 +1,12 @@
+package controller;
 import java.sql.*;
 import java.util.ArrayList;
 import javax.swing.*;
 
-import model.home;
-import model.home2;
-
+import model.Home;
+import model.week_planner;
+import model.signmodify;
+import model.User;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,7 +18,7 @@ public class DBConnection extends JFrame{
 	private Connection con;
 	private Statement st;
 	private ResultSet rs;
-	private String url = "jdbc:mysql://localhost:3306/inje?severTimezone=UTC";
+	private String url = "jdbc:mysql://localhost:3306/inje?useUnicode=true&characterEncoding=UTF-8";
 	private String user = "root";
 	private String password = "chlwnsgur1!";
 	private static boolean isLoginFormVisible = false;
@@ -61,6 +63,7 @@ public class DBConnection extends JFrame{
 			ResultSet rs = pstmt.executeQuery();
 			
 			return rs.next();
+			
 		}catch (Exception e)
 		{
 			e.printStackTrace();
@@ -221,9 +224,10 @@ public class DBConnection extends JFrame{
 	            
 	            if (isAuthenticated) {
 	                // 성공적인 로그인 시, 새 창을 열거나 다른 작업을 수행할 수 있습니다.
-	                JOptionPane.showMessageDialog(frame, "로그인 성공!");
 	                frame.dispose();
-	                home2.main(new String[0]);
+	                Home.main(new String[0]);
+	                User ab = new User(userId);
+	              
 	            } else {
 	                // 로그인 실패 시 오류 메시지를 표시합니다.
 	                JOptionPane.showMessageDialog(frame, "로그인 실패.");
@@ -278,5 +282,27 @@ public class DBConnection extends JFrame{
 		
 
 	}
+	 public boolean updateMember(String username, String password, String name, String department, String email, String phone)
+		{
+			 String sql = "UPDATE user SET pass = ?, name = ?, department = ?, email = ?, phone = ? WHERE id = ?";
+			 
+			 try {
+				 PreparedStatement pstmt = con.prepareStatement(sql);
+			        pstmt.setString(1, password);
+			        pstmt.setString(2, name);
+			        pstmt.setString(3, department);
+			        pstmt.setString(4, email);
+			        pstmt.setString(5, phone);
+			        pstmt.setString(6, username);
+				 
+			        int rowsAffected = pstmt.executeUpdate();
+			        return rowsAffected > 0;
+			 }catch (Exception e) {
+				 e.printStackTrace();
+					return false;
+		}
+	}
 
+	 
+	 
 }
