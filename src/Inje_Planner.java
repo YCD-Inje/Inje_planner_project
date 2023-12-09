@@ -29,8 +29,6 @@ public class Inje_Planner extends JFrame{
 	Map<String, DefaultListModel<String>> todoListsByDay;
     JList<String>[] topDayLists;
     JList<String>[] bottomDayLists;
-    JScrollPane[] topScrollPanes;
-    JScrollPane[] bottomScrollPanes;
    
 	public Inje_Planner() {
 		setTitle("InjePlanner");
@@ -42,9 +40,51 @@ public class Inje_Planner extends JFrame{
 		//center 패널
 		JPanel center = new JPanel();
 		center.setLayout(null);
+
+		panel[0] = new JPanel();
+		panel[1] = new JPanel() {
+			@Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.setColor(Color.BLACK);
+                g.drawLine(0, 0, 1260, 0);
+                g.drawLine(0, 50, 1260, 50);
+                g.drawLine(0, 350, 1260, 350);
+                g.drawLine(0, 400, 1260, 400);
+                g.drawLine(0, 701, 1260, 701);
+                g.drawLine(0, 0, 0, 701);
+                g.drawLine(180, 0, 180, 701);
+                g.drawLine(360, 0, 360, 701);
+                g.drawLine(540, 0, 540, 701);
+                g.drawLine(720, 0, 720, 701);
+                g.drawLine(900, 0, 900, 701);
+                g.drawLine(1080, 0, 1080, 701);
+                g.drawLine(1260, 0, 1260, 701);
+            }
+		};
+		panel[2] = new JPanel() {
+			@Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.setColor(Color.BLACK);
+                g.drawLine(0, 0, 1260, 0);
+                g.drawLine(0, 50, 1260, 50);
+                g.drawLine(0, 350, 1260, 350);
+                g.drawLine(0, 400, 1260, 400);
+                g.drawLine(0, 701, 1260, 701);
+                g.drawLine(0, 0, 0, 701);
+                g.drawLine(180, 0, 180, 701);
+                g.drawLine(360, 0, 360, 701);
+                g.drawLine(540, 0, 540, 701);
+                g.drawLine(720, 0, 720, 701);
+                g.drawLine(900, 0, 900, 701);
+                g.drawLine(1080, 0, 1080, 701);
+                g.drawLine(1260, 0, 1260, 701);
+            }
+		};
+		panel[3] = new JPanel();
 		
 		for(int i = 0; i < 4; i++) {
-			panel[i] = new JPanel();
 			panel[i].setVisible(false);
 			panel[i].setLayout(null);
 			panel[i].setSize(getWidth(),getHeight());
@@ -67,18 +107,14 @@ public class Inje_Planner extends JFrame{
 
         topDayLists = new JList[14]; // 요일별 ToDo 리스트를 담을 배열 (위 리스트)
         bottomDayLists = new JList[14]; // 요일별 Done 리스트를 담을 배열 (아래 리스트)
-        topScrollPanes = new JScrollPane[14]; // 스크롤 패널 배열 (위 리스트)
-        bottomScrollPanes = new JScrollPane[14]; // 스크롤 패널 배열 (아래 리스트)
-        String[] days = {"월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일",
-        		"다음주 월요일", "다음주 화요일", "다음주 수요일", "다음주 목요일", "다음주 금요일", "다음주 토요일", "다음주 일요일"};
-        String[] Done_days = {"월_Done", "화_Done", "수_Done", "목_Done", "금_Done", "토_Done", "일_Done",
-        		"다음주 월요일_Done", "다음주 화요일_Done", "다음주 수요일_Done", "다음주 목요일_Done", "다음주 금요일_Done", "다음주 토요일_Done", "다음주 일요일_Done"};
+        String[] days = {"월요일 ToDo", "화요일 ToDo", "수요일 ToDo", "목요일 ToDo", "금요일 ToDo", "토요일 ToDo", "일요일 ToDo",
+        		"다음주 월요일 ToDo", "다음주 화요일 ToDo", "다음주 수요일 ToDo", "다음주 목요일 ToDo", "다음주 금요일 ToDo", "다음주 토요일 ToDo", "다음주 일요일 ToDo"};
+        String[] Done_days = {"월요일 Done", "화요일 Done", "수요일 Done", "목요일 Done", "금요일 Done", "토요일 Done", "일요일 Done",
+        		"다음주 월요일 Done", "다음주 화요일 Done", "다음주 수요일 Done", "다음주 목요일 Done", "다음주 금요일 Done", "다음주 토요일 Done", "다음주 일요일 Done"};
         String[] week = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
         for(int i=0; i<7; i++) {
         	topDayLists[i] = new JList<>(todoListsByDay.get(days[i]));
-            topScrollPanes[i] = new JScrollPane(topDayLists[i]);
             bottomDayLists[i] = new JList<>(todoListsByDay.get(Done_days[i]));
-            bottomScrollPanes[i] = new JScrollPane(bottomDayLists[i]);
             //요일 ToDo List 라벨
             lb[i] = new JLabel(week[i], SwingConstants.CENTER);
             lb[i].setSize(180, 50);
@@ -86,13 +122,13 @@ public class Inje_Planner extends JFrame{
             lb[i].setFont(italicFont1);
             panel[1].add(lb[i]);
             //요일 ToDo List
-            topScrollPanes[i].setSize(180, 250);
-            topScrollPanes[i].setLocation(180 * i, 50);
-            panel[1].add(topScrollPanes[i]);
+            topDayLists[i].setSize(177, 220);
+            topDayLists[i].setLocation(180 * i + 2, 65);
+            panel[1].add(topDayLists[i]);
             //Done List로 옮기기 버튼
             moveButton[i] = new JButton("Clear"); // 아래로 이동하는 버튼
-            moveButton[i].setSize(180, 50);
-            moveButton[i].setLocation(180 * i, 300);
+            moveButton[i].setSize(175, 50);
+            moveButton[i].setLocation(180 * i + 3, 299);
             moveButton[i].addActionListener(new MoveButtonAction(i));
             panel[1].add(moveButton[i]);
             //Done List 라벨
@@ -102,18 +138,18 @@ public class Inje_Planner extends JFrame{
             lb2[i].setFont(italicFont2);
             panel[1].add(lb2[i]);
             //Done List
-            bottomScrollPanes[i].setSize(180, 250);
-            bottomScrollPanes[i].setLocation(180 * i, 400);
-            panel[1].add(bottomScrollPanes[i]);
+            bottomDayLists[i].setSize(177, 220);
+            bottomDayLists[i].setLocation(180 * i + 2, 415);
+            panel[1].add(bottomDayLists[i]);
             //추가 삭제 버튼
             addButton[i] = new JButton("추가"); // 아래로 이동하는 버튼
-            addButton[i].setSize(90, 50);
-            addButton[i].setLocation(180 * i, 650);
+            addButton[i].setSize(86, 50);
+            addButton[i].setLocation(180 * i + 3, 650);
             addButton[i].addActionListener(new AddButtonAction(i));
             panel[1].add(addButton[i]);
             deleteButton[i] = new JButton("삭제"); // 아래로 이동하는 버튼
-            deleteButton[i].setSize(90, 50);
-            deleteButton[i].setLocation(180 * i + 90, 650);
+            deleteButton[i].setSize(86, 50);
+            deleteButton[i].setLocation(180 * i + 92, 650);
             deleteButton[i].addActionListener(new DeleteButtonAction(i));
             panel[1].add(deleteButton[i]);
         }
@@ -124,9 +160,7 @@ public class Inje_Planner extends JFrame{
 		//다음주 계획 패널	
         for(int i=7; i<14; i++) {
         	topDayLists[i] = new JList<>(todoListsByDay.get(days[i]));
-            topScrollPanes[i] = new JScrollPane(topDayLists[i]);
             bottomDayLists[i] = new JList<>(todoListsByDay.get(Done_days[i]));
-            bottomScrollPanes[i] = new JScrollPane(bottomDayLists[i]);
             //요일 ToDo List 라벨
             lb[i] = new JLabel(week[i-7], SwingConstants.CENTER);
             lb[i].setSize(180, 50);
@@ -134,13 +168,13 @@ public class Inje_Planner extends JFrame{
             lb[i].setFont(italicFont1);
             panel[2].add(lb[i]);
             //요일 ToDo List
-            topScrollPanes[i].setSize(180, 250);
-            topScrollPanes[i].setLocation(180 * (i-7), 50);
-            panel[2].add(topScrollPanes[i]);
+            topDayLists[i].setSize(177, 220);
+            topDayLists[i].setLocation(180 * (i-7) + 2, 65);
+            panel[2].add(topDayLists[i]);
             //Done List로 옮기기 버튼
             moveButton[i] = new JButton("Clear"); // 아래로 이동하는 버튼
-            moveButton[i].setSize(180, 50);
-            moveButton[i].setLocation(180 * (i-7), 300);
+            moveButton[i].setSize(175, 50);
+            moveButton[i].setLocation(180 * (i-7) + 3, 299);
             moveButton[i].addActionListener(new MoveButtonAction(i));
             panel[2].add(moveButton[i]);
             //Done List 라벨
@@ -150,18 +184,18 @@ public class Inje_Planner extends JFrame{
             lb2[i].setFont(italicFont2);
             panel[2].add(lb2[i]);
             //Done List
-            bottomScrollPanes[i].setSize(180, 250);
-            bottomScrollPanes[i].setLocation(180 * (i-7), 400);
-            panel[2].add(bottomScrollPanes[i]);
+            bottomDayLists[i].setSize(177, 220);
+            bottomDayLists[i].setLocation(180 * (i-7) + 2, 415);
+            panel[2].add(bottomDayLists[i]);
             //추가 삭제 버튼
             addButton[i] = new JButton("추가"); // 아래로 이동하는 버튼
-            addButton[i].setSize(90, 50);
-            addButton[i].setLocation(180 * (i-7), 650);
+            addButton[i].setSize(86, 50);
+            addButton[i].setLocation(180 * (i-7) + 3, 650);
             addButton[i].addActionListener(new AddButtonAction(i));
             panel[2].add(addButton[i]);
             deleteButton[i] = new JButton("삭제"); // 아래로 이동하는 버튼
-            deleteButton[i].setSize(90, 50);
-            deleteButton[i].setLocation(180 * (i-7) + 90, 650);
+            deleteButton[i].setSize(86, 50);
+            deleteButton[i].setLocation(180 * (i-7) + 92, 650);
             deleteButton[i].addActionListener(new DeleteButtonAction(i));
             panel[2].add(deleteButton[i]);
         }
@@ -262,10 +296,10 @@ public class Inje_Planner extends JFrame{
 		
 	// 각 요일별 ToDo 리스트 생성
     private void createDayLists() {
-    	String[] days = {"월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일",
-        		"다음주 월요일", "다음주 화요일", "다음주 수요일", "다음주 목요일", "다음주 금요일", "다음주 토요일", "다음주 일요일"};
-        String[] Done_days = {"월_Done", "화_Done", "수_Done", "목_Done", "금_Done", "토_Done", "일_Done",
-        		"다음주 월요일_Done", "다음주 화요일_Done", "다음주 수요일_Done", "다음주 목요일_Done", "다음주 금요일_Done", "다음주 토요일_Done", "다음주 일요일_Done"};
+    	String[] days = {"월요일 ToDo", "화요일 ToDo", "수요일 ToDo", "목요일 ToDo", "금요일 ToDo", "토요일 ToDo", "일요일 ToDo",
+        		"다음주 월요일 ToDo", "다음주 화요일 ToDo", "다음주 수요일 ToDo", "다음주 목요일 ToDo", "다음주 금요일 ToDo", "다음주 토요일 ToDo", "다음주 일요일 ToDo"};
+        String[] Done_days = {"월요일 Done", "화요일 Done", "수요일 Done", "목요일 Done", "금요일 Done", "토요일 Done", "일요일 Done",
+        		"다음주 월요일 Done", "다음주 화요일 Done", "다음주 수요일 Done", "다음주 목요일 Done", "다음주 금요일 Done", "다음주 토요일 Done", "다음주 일요일 Done"};
         for (String day : days) {
             DefaultListModel<String> dayList = new DefaultListModel<>();
             loadToDoList(day, dayList);
@@ -279,13 +313,13 @@ public class Inje_Planner extends JFrame{
     }
     // 각 요일별 ToDo 리스트 파일에서 데이터를 로드하여 리스트에 추가
     private void loadToDoList(String day, DefaultListModel<String> dayList) {
-        try (Scanner scanner = new Scanner(new File("todolist_" + day + ".txt"))) {
+        try (Scanner scanner = new Scanner(new File(day + "_List.txt"))) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 dayList.addElement(line);
             }
         } catch (FileNotFoundException e) {
-            System.out.println(day + "의 ToDo 리스트 파일을 찾을 수 없습니다.");
+            System.out.println(day + " List 파일을 찾을 수 없습니다.");
         }
     }
     // 추가 버튼 동작을 위한 ActionListener 클래스
@@ -352,23 +386,23 @@ public class Inje_Planner extends JFrame{
     }
     // ToDo 리스트를 파일에 저장
     private void saveToDoList(String day, DefaultListModel<String> dayList) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter("todolist_" + day + ".txt"))) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(day + "_List.txt"))) {
             for (int i = 0; i < dayList.size(); i++) {
                 writer.println(dayList.getElementAt(i));
             }
         } catch (IOException e) {
-            System.out.println(day + "의 ToDo 리스트 파일에 쓰기 실패");
+            System.out.println(day + " List 파일에 쓰기 실패");
         }
     }
     // 인덱스를 요일명으로 변환
     private String getDayName(int index) {
-    	String[] days = {"월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일",
-        		"다음주 월요일", "다음주 화요일", "다음주 수요일", "다음주 목요일", "다음주 금요일", "다음주 토요일", "다음주 일요일"};
+    	String[] days = {"월요일 ToDo", "화요일 ToDo", "수요일 ToDo", "목요일 ToDo", "금요일 ToDo", "토요일 ToDo", "일요일 ToDo",
+        		"다음주 월요일 ToDo", "다음주 화요일 ToDo", "다음주 수요일 ToDo", "다음주 목요일 ToDo", "다음주 금요일 ToDo", "다음주 토요일 ToDo", "다음주 일요일 ToDo"};
         return days[index];
     }
     private String getDoneDayName(int index) {
-        String[] Done_days = {"월_Done", "화_Done", "수_Done", "목_Done", "금_Done", "토_Done", "일_Done",
-        		"다음주 월요일_Done", "다음주 화요일_Done", "다음주 수요일_Done", "다음주 목요일_Done", "다음주 금요일_Done", "다음주 토요일_Done", "다음주 일요일_Done"};
+        String[] Done_days = {"월요일 Done", "화요일 Done", "수요일 Done", "목요일 Done", "금요일 Done", "토요일 Done", "일요일 Done",
+        		"다음주 월요일 Done", "다음주 화요일 Done", "다음주 수요일 Done", "다음주 목요일 Done", "다음주 금요일 Done", "다음주 토요일 Done", "다음주 일요일 Done"};
         return Done_days[index];
     }
 	public static void main(String[] args) {
