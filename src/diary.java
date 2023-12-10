@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,20 +16,39 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 
+=======
+package model;
+
+import controller.DBConnection;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.sql.*;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
 public class diary extends JFrame {
 
     private Connection con;
     private ResultSet rs;
 	private String url = "jdbc:mysql://localhost:3306/inje?severTimezon=UTC";
     private String user = "root";
+<<<<<<< HEAD
     private String password = "5641";
     private PreparedStatement pstmt;
+=======
+    private String password = "chlwnsgur1!";
+    private PreparedStatement pstmt;
+    private JFrame frame = new JFrame("수정창");
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
     private JPanel buttonPanel;
     private JPanel contentPanel;
     private JPanel homePanel;
     private String loggedInUserId;
     private DBConnection loginInstance;
     
+<<<<<<< HEAD
     JLabel [] lb = new JLabel[14];
 	JLabel [] lb2 = new JLabel[14];
 	JButton [] moveButton = new JButton[14];
@@ -41,6 +61,8 @@ public class diary extends JFrame {
     
     Font italicFont1 = new Font("Arial", Font.PLAIN, 30);
 	Font italicFont2 = new Font("Arial", Font.PLAIN, 20);
+=======
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
     
     public diary(DBConnection loginInstance) {
         this.loginInstance = loginInstance;
@@ -57,7 +79,11 @@ public class diary extends JFrame {
         
         setTitle("Inje Weekly Planner");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+<<<<<<< HEAD
         setSize(1595, 765);
+=======
+        setSize(1200, 800);
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
         setLayout(new BorderLayout());
 
         buttonPanel = createButtonPanel();
@@ -79,31 +105,53 @@ public class diary extends JFrame {
         panel.setLayout(new GridLayout(5, 1));
         
         
+<<<<<<< HEAD
         ImageIcon Diary = new ImageIcon("images/Diary.png");
         
         JButton homeButton = new JButton();
         ImageIcon mainIcon = new ImageIcon("images/_Home.png");
+=======
+        ImageIcon Diary = new ImageIcon("image/Diary.png");
+        
+        JButton homeButton = new JButton();
+        ImageIcon mainIcon = new ImageIcon("image/_Home.png");
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
         homeButton.setIcon(mainIcon);
         homeButton.setContentAreaFilled(false);
         homeButton.setBorder(BorderFactory.createEmptyBorder());
         
         
         JButton thisButton = new JButton("");
+<<<<<<< HEAD
         ImageIcon thisIcon = new ImageIcon("images/This_Week.png");
+=======
+        ImageIcon thisIcon = new ImageIcon("image/This_Week.png");
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
         thisButton.setIcon(thisIcon);
         thisButton.setContentAreaFilled(false);
         thisButton.setBorder(BorderFactory.createEmptyBorder());
         
         
+<<<<<<< HEAD
         JButton nextButton = new JButton("");
         ImageIcon nextIcon = new ImageIcon("images/Next_Week.png");
+=======
+        
+        
+        JButton nextButton = new JButton("");
+        ImageIcon nextIcon = new ImageIcon("image/Next_Week.png");
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
         nextButton.setIcon(nextIcon);
         nextButton.setContentAreaFilled(false);
         nextButton.setBorder(BorderFactory.createEmptyBorder());
         
       
         JButton editButton = new JButton();
+<<<<<<< HEAD
         ImageIcon editIcon = new ImageIcon("images/_Settings.png");
+=======
+        ImageIcon editIcon = new ImageIcon("image/_Settings.png");
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
         editButton.setIcon(editIcon);
         editButton.setContentAreaFilled(false);
         editButton.setBorder(BorderFactory.createEmptyBorder());
@@ -137,7 +185,11 @@ public class diary extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 contentPanel.removeAll();
+<<<<<<< HEAD
                 contentPanel.add(createNextPlanPanel(), BorderLayout.CENTER);
+=======
+                contentPanel.add(createPlanPanel(), BorderLayout.CENTER);
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
                 contentPanel.revalidate();
                 contentPanel.repaint();
                 
@@ -190,6 +242,7 @@ public class diary extends JFrame {
     }
 
     public JPanel createPlanPanel() {
+<<<<<<< HEAD
         JPanel panel = new JPanel() {
         	@Override
             protected void paintComponent(Graphics g) {
@@ -356,6 +409,18 @@ public class diary extends JFrame {
         lb[13].setForeground(Color.RED);
 
         panel.add(new JScrollPane(), BorderLayout.CENTER);
+=======
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        String[] columnNames = {"월", "화", "수", "목", "금", "토", "일"};
+        String[][] data = new String[3][7];
+
+        JTable table = new JTable(data, columnNames);
+
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
 
         return panel;
     }
@@ -441,12 +506,29 @@ public class diary extends JFrame {
         JButton editButton = new JButton("수정");
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(editButton);
+<<<<<<< HEAD
         
         
         JButton logoutButton = new JButton("로그아웃");
         buttonPanel.add(logoutButton);
         
         panel.add(buttonPanel);
+=======
+        panel.add(new JLabel());
+        panel.add(buttonPanel);
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        JButton logoutButton = new JButton("로그아웃");
+        panel.add(logoutButton);
+        
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
         
         
         logoutButton.addActionListener(new ActionListener() {
@@ -457,7 +539,10 @@ public class diary extends JFrame {
                 dbConnection.connect();
                 dbConnection.setLoggedInUserId(null);
                 
+<<<<<<< HEAD
                 dispose();
+=======
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
 
                 // 수정된 부분: main 메서드를 클래스 이름을 통해 정적으로 호출
                 DBConnection.main(new String[0]);
@@ -537,6 +622,7 @@ public class diary extends JFrame {
         return panel;
     }
     
+<<<<<<< HEAD
     private void createDayLists() {
     	String[] days = {"월요일 ToDo", "화요일 ToDo", "수요일 ToDo", "목요일 ToDo", "금요일 ToDo", "토요일 ToDo", "일요일 ToDo",
         		"다음주 월요일 ToDo", "다음주 화요일 ToDo", "다음주 수요일 ToDo", "다음주 목요일 ToDo", "다음주 금요일 ToDo", "다음주 토요일 ToDo", "다음주 일요일 ToDo"};
@@ -648,6 +734,8 @@ public class diary extends JFrame {
         return Done_days[index];
     }
     
+=======
+>>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
     public static void main(String[] args) {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
