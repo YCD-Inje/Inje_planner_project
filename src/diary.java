@@ -1,19 +1,13 @@
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.time.*;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-
 
 public class diary extends JFrame {
 
@@ -35,13 +29,14 @@ public class diary extends JFrame {
 	JButton [] addButton = new JButton[14];
 	JButton [] deleteButton = new JButton[14];
 	
-	Map<String, DefaultListModel<String>> todoListsByDay;
     JList<String>[] topDayLists;
     JList<String>[] bottomDayLists;
     
     Font italicFont1 = new Font("Arial", Font.PLAIN, 30);
 	Font italicFont2 = new Font("Arial", Font.PLAIN, 20);
     
+	
+	
     public diary(DBConnection loginInstance) {
         this.loginInstance = loginInstance;
         this.loggedInUserId = loginInstance.getLoggedInUserId();
@@ -129,6 +124,8 @@ public class diary extends JFrame {
                 contentPanel.revalidate();
                 contentPanel.repaint();
                 
+                deletePreviousWeekData();
+                
                 System.out.print(loginInstance.getLoggedInUserId() + "\n");
             }
         });
@@ -161,7 +158,6 @@ public class diary extends JFrame {
 		int newWidth = 110;
 		int newHeight = 100;
 		
-		
         ImageIcon resizedIcon = new ImageIcon(Diary.getImage().getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH));
         
         panel.add(new JLabel(resizedIcon));
@@ -170,8 +166,6 @@ public class diary extends JFrame {
         panel.add(thisButton);
         panel.add(nextButton);
         panel.add(editButton);
-        
-
         return panel;
     }
 
@@ -188,7 +182,7 @@ public class diary extends JFrame {
 
         return panel;
     }
-    //이번주 계획
+
     public JPanel createPlanPanel() {
         JPanel panel = new JPanel() {
         	@Override
@@ -214,27 +208,23 @@ public class diary extends JFrame {
         };
         panel.setLayout(null);
 
-        todoListsByDay = new HashMap<>();
-        createDayLists();
         
         topDayLists = new JList[14]; // 요일별 ToDo 리스트를 담을 배열 (위 리스트)
         bottomDayLists = new JList[14]; // 요일별 Done 리스트를 담을 배열 (아래 리스트)
-        String[] days = {"월요일 ToDo", "화요일 ToDo", "수요일 ToDo", "목요일 ToDo", "금요일 ToDo", "토요일 ToDo", "일요일 ToDo",
-        		"다음주 월요일 ToDo", "다음주 화요일 ToDo", "다음주 수요일 ToDo", "다음주 목요일 ToDo", "다음주 금요일 ToDo", "다음주 토요일 ToDo", "다음주 일요일 ToDo"};
-        String[] Done_days = {"월요일 Done", "화요일 Done", "수요일 Done", "목요일 Done", "금요일 Done", "토요일 Done", "일요일 Done",
-        		"다음주 월요일 Done", "다음주 화요일 Done", "다음주 수요일 Done", "다음주 목요일 Done", "다음주 금요일 Done", "다음주 토요일 Done", "다음주 일요일 Done"};
+        lb = new JLabel[14];
+        lb2 = new JLabel[14];
+        
         String[] week = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
         
         for(int i=0; i<7; i++) {
-        	topDayLists[i] = new JList<>(todoListsByDay.get(days[i]));
-            bottomDayLists[i] = new JList<>(todoListsByDay.get(Done_days[i]));
-            //요일 ToDo List 라벨
+        	//요일 ToDo List 라벨
             lb[i] = new JLabel(week[i], SwingConstants.CENTER);
             lb[i].setSize(185, 50);
             lb[i].setLocation(185 * i, 0);
             lb[i].setFont(italicFont1);
             panel.add(lb[i]);
             //요일 ToDo List
+            topDayLists[i] = new JList<>();
             topDayLists[i].setSize(183, 220);
             topDayLists[i].setLocation(185 * i + 1, 65);
             panel.add(topDayLists[i]);
@@ -242,7 +232,7 @@ public class diary extends JFrame {
             moveButton[i] = new JButton("Clear"); // 아래로 이동하는 버튼
             moveButton[i].setSize(182, 50);
             moveButton[i].setLocation(185 * i + 2, 299);
-            moveButton[i].addActionListener(new MoveButtonAction(i));
+            moveButton[i].addActionListener(new MoveButtonAction(topDayLists[i], bottomDayLists[i]));
             panel.add(moveButton[i]);
             //Done List 라벨
             lb2[i] = new JLabel("Done", SwingConstants.CENTER);
@@ -251,6 +241,7 @@ public class diary extends JFrame {
             lb2[i].setFont(italicFont2);
             panel.add(lb2[i]);
             //Done List
+            bottomDayLists[i] = new JList<>();
             bottomDayLists[i].setSize(183, 220);
             bottomDayLists[i].setLocation(185 * i + 1, 415);
             panel.add(bottomDayLists[i]);
@@ -263,8 +254,16 @@ public class diary extends JFrame {
             deleteButton[i] = new JButton("삭제"); // 아래로 이동하는 버튼
             deleteButton[i].setSize(90, 50);
             deleteButton[i].setLocation(185 * i + 94, 650);
-            deleteButton[i].addActionListener(new DeleteButtonAction(i));
+            deleteButton[i].addActionListener(new DeleteButtonAction(topDayLists[i]));
+            deleteButton[i].addActionListener(new DeleteButtonAction(bottomDayLists[i]));
             panel.add(deleteButton[i]);
+            // 각 요일의 JList에 대한 모델 설정
+            DefaultListModel<String> topModel = new DefaultListModel<>();
+            DefaultListModel<String> bottomModel = new DefaultListModel<>();
+            topDayLists[i].setModel(topModel);
+            bottomDayLists[i].setModel(bottomModel);
+            // 해당 요일의 일정 표시
+            populateJLists(i);
         }
         lb[5].setForeground(Color.BLUE);
         lb[6].setForeground(Color.RED);
@@ -274,7 +273,7 @@ public class diary extends JFrame {
 
         return panel;
     }
-    //다음주 계획
+    
     public JPanel createNextPlanPanel() {
         JPanel panel = new JPanel() {
         	@Override
@@ -300,27 +299,22 @@ public class diary extends JFrame {
         };
         panel.setLayout(null);
         
-        todoListsByDay = new HashMap<>();
-        createDayLists();
-        
+         
         topDayLists = new JList[14]; // 요일별 ToDo 리스트를 담을 배열 (위 리스트)
         bottomDayLists = new JList[14]; // 요일별 Done 리스트를 담을 배열 (아래 리스트)
-        String[] days = {"월요일 ToDo", "화요일 ToDo", "수요일 ToDo", "목요일 ToDo", "금요일 ToDo", "토요일 ToDo", "일요일 ToDo",
-        		"다음주 월요일 ToDo", "다음주 화요일 ToDo", "다음주 수요일 ToDo", "다음주 목요일 ToDo", "다음주 금요일 ToDo", "다음주 토요일 ToDo", "다음주 일요일 ToDo"};
-        String[] Done_days = {"월요일 Done", "화요일 Done", "수요일 Done", "목요일 Done", "금요일 Done", "토요일 Done", "일요일 Done",
-        		"다음주 월요일 Done", "다음주 화요일 Done", "다음주 수요일 Done", "다음주 목요일 Done", "다음주 금요일 Done", "다음주 토요일 Done", "다음주 일요일 Done"};
+        lb = new JLabel[14];
+        lb2 = new JLabel[14];
         String[] week = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
         
         for(int i=7; i<14; i++) {
-        	topDayLists[i] = new JList<>(todoListsByDay.get(days[i]));
-            bottomDayLists[i] = new JList<>(todoListsByDay.get(Done_days[i]));
-            //요일 ToDo List 라벨
+        	//요일 ToDo List 라벨
             lb[i] = new JLabel(week[i-7], SwingConstants.CENTER);
             lb[i].setSize(185, 50);
             lb[i].setLocation(185 * (i-7), 0);
             lb[i].setFont(italicFont1);
             panel.add(lb[i]);
             //요일 ToDo List
+            topDayLists[i] = new JList<>();
             topDayLists[i].setSize(183, 220);
             topDayLists[i].setLocation(185 * (i-7) + 1, 65);
             panel.add(topDayLists[i]);
@@ -328,7 +322,7 @@ public class diary extends JFrame {
             moveButton[i] = new JButton("Clear"); // 아래로 이동하는 버튼
             moveButton[i].setSize(182, 50);
             moveButton[i].setLocation(185 * (i-7) + 2, 299);
-            moveButton[i].addActionListener(new MoveButtonAction(i));
+            moveButton[i].addActionListener(new MoveButtonAction(topDayLists[i], bottomDayLists[i]));
             panel.add(moveButton[i]);
             //Done List 라벨
             lb2[i] = new JLabel("Done", SwingConstants.CENTER);
@@ -337,6 +331,7 @@ public class diary extends JFrame {
             lb2[i].setFont(italicFont2);
             panel.add(lb2[i]);
             //Done List
+            bottomDayLists[i] = new JList<>();
             bottomDayLists[i].setSize(183, 220);
             bottomDayLists[i].setLocation(185 * (i-7) + 1, 415);
             panel.add(bottomDayLists[i]);
@@ -349,8 +344,16 @@ public class diary extends JFrame {
             deleteButton[i] = new JButton("삭제"); // 아래로 이동하는 버튼
             deleteButton[i].setSize(90, 50);
             deleteButton[i].setLocation(185 * (i-7) + 94, 650);
-            deleteButton[i].addActionListener(new DeleteButtonAction(i));
+            deleteButton[i].addActionListener(new DeleteButtonAction(topDayLists[i]));
+            deleteButton[i].addActionListener(new DeleteButtonAction(bottomDayLists[i]));
             panel.add(deleteButton[i]);
+            // 각 요일의 JList에 대한 모델 설정
+            DefaultListModel<String> topModel = new DefaultListModel<>();
+            DefaultListModel<String> bottomModel = new DefaultListModel<>();
+            topDayLists[i].setModel(topModel);
+            bottomDayLists[i].setModel(bottomModel);
+            // 해당 요일의 일정 표시
+            populateJLists(i);
         }
         lb[12].setForeground(Color.BLUE);
         lb[13].setForeground(Color.RED);
@@ -463,8 +466,6 @@ public class diary extends JFrame {
                 DBConnection.main(new String[0]);
             }
         });
-
-
         
         editButton.addActionListener(new ActionListener() {
             @Override
@@ -537,115 +538,240 @@ public class diary extends JFrame {
         return panel;
     }
     
-    private void createDayLists() {
-    	String[] days = {"월요일 ToDo", "화요일 ToDo", "수요일 ToDo", "목요일 ToDo", "금요일 ToDo", "토요일 ToDo", "일요일 ToDo",
-        		"다음주 월요일 ToDo", "다음주 화요일 ToDo", "다음주 수요일 ToDo", "다음주 목요일 ToDo", "다음주 금요일 ToDo", "다음주 토요일 ToDo", "다음주 일요일 ToDo"};
-        String[] Done_days = {"월요일 Done", "화요일 Done", "수요일 Done", "목요일 Done", "금요일 Done", "토요일 Done", "일요일 Done",
-        		"다음주 월요일 Done", "다음주 화요일 Done", "다음주 수요일 Done", "다음주 목요일 Done", "다음주 금요일 Done", "다음주 토요일 Done", "다음주 일요일 Done"};
-        for (String day : days) {
-            DefaultListModel<String> dayList = new DefaultListModel<>();
-            loadToDoList(day, dayList);
-            todoListsByDay.put(day, dayList);
-        }
-        for (String Done_day : Done_days) {
-            DefaultListModel<String> Done_dayList = new DefaultListModel<>();
-            loadToDoList(Done_day, Done_dayList);
-            todoListsByDay.put(Done_day, Done_dayList);
-        }
-    }
-    // 각 요일별 ToDo 리스트 파일에서 데이터를 로드하여 리스트에 추가
-    private void loadToDoList(String day, DefaultListModel<String> dayList) {
-        try (Scanner scanner = new Scanner(new File(day + "_List.txt"))) {
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                dayList.addElement(line);
-            }
-        } catch (FileNotFoundException e) {
-            System.out.println(day + " List 파일을 찾을 수 없습니다.");
-        }
-    }
-    // 추가 버튼 동작을 위한 ActionListener 클래스
-    private class AddButtonAction implements ActionListener {
-        private int index;
+ // 특정 날짜와 bool 값에 따라 해당 요일의 계획을 가져오는 메서드
+    private ArrayList<String> getPlansForDay(LocalDateTime dateTime, boolean boolValue) {
+        ArrayList<String> plans = new ArrayList<>();
+        
+        try {
+            String query = "SELECT list FROM plan WHERE DATE(data_time) = ? AND bool = ? AND user_id = ?";
+            PreparedStatement pstmt = con.prepareStatement(query);
+            pstmt.setDate(1, Date.valueOf(dateTime.toLocalDate()));
+            pstmt.setBoolean(2, boolValue);
+            pstmt.setString(3, loggedInUserId);
+            ResultSet rs = pstmt.executeQuery();
 
-        public AddButtonAction(int index) {
-            this.index = index;
-        }
-        public void actionPerformed(ActionEvent e) {
-            String todoItem = JOptionPane.showInputDialog("할 일을 입력하세요:");
-            if (todoItem != null && !todoItem.trim().isEmpty()) {
-                DefaultListModel<String> dayList = todoListsByDay.get(getDayName(index));
-                dayList.addElement(todoItem);
-                saveToDoList(getDayName(index), dayList);
+            while (rs.next()) {
+                String plan = rs.getString("list");
+                plans.add(plan);
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "데이터베이스에서 계획을 가져오는 중 오류가 발생했습니다.");
         }
-    }
-    // 삭제 버튼 동작을 위한 ActionListener 클래스
-    private class DeleteButtonAction implements ActionListener {
-        private int index;
 
-        public DeleteButtonAction(int index) {
-            this.index = index;
-        }
-        public void actionPerformed(ActionEvent e) {
-            int selectedIndex = topDayLists[index].getSelectedIndex();
-            int selectedBottomIndex = bottomDayLists[index].getSelectedIndex();
-            //위 리스트 항목 삭제
-            if (selectedIndex != -1) {
-                DefaultListModel<String> dayList = todoListsByDay.get(getDayName(index));
-                dayList.remove(selectedIndex);
-                saveToDoList(getDayName(index), dayList);
-            }
-            //아래 리스트 삭제
-            if (selectedBottomIndex != -1) {
-                DefaultListModel<String> Done_dayList = todoListsByDay.get(getDoneDayName(index));
-                Done_dayList.remove(selectedBottomIndex); // 아래 리스트에서 선택된 항목 삭제
-                saveToDoList(getDoneDayName(index), Done_dayList); // 변경된 리스트를 파일에 저장
-                bottomDayLists[index].setModel(Done_dayList); // 아래 리스트 갱신
-            }
-        }
+        return plans;
     }
-    // 위 리스트에서 아래 리스트로 항목을 이동시키는 ActionListener 클래스
-    private class MoveButtonAction implements ActionListener {
-        private int index;
 
-        public MoveButtonAction(int index) {
-            this.index = index;
+    private void populateJLists(int dayIndex) {
+        LocalDateTime now = LocalDateTime.now();
+
+        // 해당 요일의 LocalDateTime 가져오기
+        int currentDayOfWeek = now.getDayOfWeek().getValue();
+        int daysUntilTargetDay = dayIndex - currentDayOfWeek + 1;
+        LocalDateTime targetDay = now.plusDays(daysUntilTargetDay);
+        targetDay = targetDay.withHour(0).withMinute(0).withSecond(0).withNano(0);
+
+        // 해당 요일의 위와 아래 JList에 대한 계획 가져오기
+        ArrayList<String> topPlans = getPlansForDay(targetDay, false); // bool 값이 false인 계획
+        ArrayList<String> bottomPlans = getPlansForDay(targetDay, true); // bool 값이 true인 계획
+
+        // 가져온 계획들을 JList에 설정
+        DefaultListModel<String> topModel = new DefaultListModel<>();
+        DefaultListModel<String> bottomModel = new DefaultListModel<>();
+
+        for (String plan : topPlans) {
+            topModel.addElement(plan);
         }
+
+        for (String plan : bottomPlans) {
+            bottomModel.addElement(plan);
+        }
+
+        // JList 갱신
+        topDayLists[dayIndex].setModel(topModel);
+        bottomDayLists[dayIndex].setModel(bottomModel);
+    }
+    
+    public void deletePreviousWeekData() {
+        try {
+            // 현재 날짜를 가져옴
+            LocalDate today = LocalDate.now();
+            
+            // 현재 날짜에서 일주일 전의 일요일 날짜 계산
+            LocalDate previousSunday = today.minusWeeks(1).with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
+            
+            // 이전 주 일요일 이전의 데이터 삭제하는 쿼리 작성
+            String deleteQuery = "DELETE FROM plan WHERE data_time < ?";
+
+            PreparedStatement pstmt = con.prepareStatement(deleteQuery);
+            pstmt.setObject(1, previousSunday.atStartOfDay());
+            
+            // 실행
+            int deletedRows = pstmt.executeUpdate();
+            
+            if (deletedRows > 0) {
+                System.out.println("이전 주의 데이터 삭제 완료");
+            } else {
+                System.out.println("삭제할 데이터가 없습니다.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "이전 주의 데이터 삭제 중 오류가 발생했습니다.");
+        }
+    }
+    
+ // '추가' 버튼 액션 리스너 클래스
+    class AddButtonAction implements ActionListener {
+        private int dayIndex; // 요일 인덱스 (0부터 13까지)
+
+        public AddButtonAction(int dayIndex) {
+            this.dayIndex = dayIndex;
+        }
+
+        @Override
         public void actionPerformed(ActionEvent e) {
-            int selectedIndex = topDayLists[index].getSelectedIndex();
-            if (selectedIndex != -1) {
-                DefaultListModel<String> topDayList = todoListsByDay.get(getDayName(index));
-                DefaultListModel<String> bottomDayList = todoListsByDay.get(getDoneDayName(index));
-                String selectedItem = topDayList.get(selectedIndex);
-                topDayList.remove(selectedIndex); // 위 리스트에서 삭제
-                bottomDayList.addElement(selectedItem); // 아래 리스트에 추가
-                
-                saveToDoList(getDayName(index), topDayList);
-                saveToDoList(getDoneDayName(index), bottomDayList);
+            String userID = loggedInUserId; // 로그인한 유저 아이디
+
+
+            // 추가하고자 하는 항목 (다이얼로그를 통해 사용자로부터 입력 받음)
+            String newItem = JOptionPane.showInputDialog("일정 내용을 입력하세요:");
+
+            // 요일별로 datetime 값 계산
+            LocalDateTime dateTime = calculateDayDate(dayIndex); // dayIndex는 해당 요일의 인덱스(0부터 6까지)
+
+            
+            // 입력이 취소되거나 아무것도 입력하지 않았을 때의 처리
+            if (newItem == null || newItem.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(diary.this, "내용을 입력하세요.", "경고", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            // DB에 데이터 삽입
+            try {
+                String sql = "INSERT INTO plan (user_id, data_time, list, bool) VALUES (?, ?, ?, ?)";
+                PreparedStatement pstmt = con.prepareStatement(sql);
+                pstmt.setString(1, userID);
+                pstmt.setObject(2, dateTime);
+                pstmt.setString(3, newItem);
+                pstmt.setBoolean(4, false);
+
+                // 실행
+                int rowsAffected = pstmt.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    // 성공 메시지 또는 다른 작업 수행
+                    JOptionPane.showMessageDialog(diary.this, "일정이 추가되었습니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    // 실패 메시지 또는 예외 처리
+                    JOptionPane.showMessageDialog(diary.this, "일정 추가 실패", "실패", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                // 실패 메시지 또는 예외 처리
+                JOptionPane.showMessageDialog(diary.this, "일정 추가 실패: " + ex.getMessage(), "실패", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+     // 해당 요일의 날짜를 계산하는 메서드
+        private LocalDateTime calculateDayDate(int dayIndex) {
+            LocalDateTime now = LocalDateTime.now(); // 현재 날짜와 시간
+            DayOfWeek today = now.getDayOfWeek(); // 현재 요일
+
+            // 오늘이 해당 요일이라면 현재 날짜를 반환
+            if (today.getValue() == dayIndex + 1) { // dayIndex는 0부터 시작하기 때문에 요일 값에 +1 해줍니다.
+                return now;
+            }
+
+            // 현재 날짜에서 해당 요일로 이동하기 위해 추가로 필요한 일 수 계산
+            int daysToAdd = dayIndex + 1 - today.getValue();
+            if (daysToAdd < 0) {
+                daysToAdd += 7; // 해당 요일이 오늘보다 이전이라면 다음 주의 해당 요일로 계산
+            }
+
+            // 계산된 일 수를 더하여 해당 요일의 날짜를 계산
+            return now.plusDays(daysToAdd).toLocalDate().atStartOfDay();
+        }
+    }
+ // '삭제' 버튼 액션 리스너 클래스
+    class DeleteButtonAction implements ActionListener {
+        private JList<String> list; // 해당 요일의 리스트
+
+        public DeleteButtonAction(JList<String> list) {
+            this.list = list;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String selectedValue = list.getSelectedValue(); // 선택된 항목
+
+            if (selectedValue != null) {
+                // DB에서 해당 항목 삭제
+                try {
+                    String sql = "DELETE FROM plan WHERE list = ?";
+                    PreparedStatement pstmt = con.prepareStatement(sql);
+                    pstmt.setString(1, selectedValue);
+
+                    // 실행
+                    int rowsAffected = pstmt.executeUpdate();
+
+                    if (rowsAffected > 0) {
+                        // 성공 메시지 또는 다른 작업 수행
+                        JOptionPane.showMessageDialog(diary.this, "선택한 항목이 삭제되었습니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        // 실패 메시지 또는 예외 처리
+                        JOptionPane.showMessageDialog(diary.this, "항목 삭제 실패", "실패", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    // 실패 메시지 또는 예외 처리
+                    JOptionPane.showMessageDialog(diary.this, "항목 삭제 실패: " + ex.getMessage(), "실패", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+            	
             }
         }
     }
-    // ToDo 리스트를 파일에 저장
-    private void saveToDoList(String day, DefaultListModel<String> dayList) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(day + "_List.txt"))) {
-            for (int i = 0; i < dayList.size(); i++) {
-                writer.println(dayList.getElementAt(i));
-            }
-        } catch (IOException e) {
-            System.out.println(day + " List 파일에 쓰기 실패");
+ // 'Clear' 버튼 액션 리스너 클래스
+    class MoveButtonAction implements ActionListener {
+        private JList<String> topList; // 상단 리스트
+        private JList<String> bottomList; // 하단 리스트
+
+        public MoveButtonAction(JList<String> topList, JList<String> bottomList) {
+            this.topList = topList;
+            this.bottomList = bottomList;
         }
-    }
-    // 인덱스를 요일명으로 변환
-    private String getDayName(int index) {
-    	String[] days = {"월요일 ToDo", "화요일 ToDo", "수요일 ToDo", "목요일 ToDo", "금요일 ToDo", "토요일 ToDo", "일요일 ToDo",
-        		"다음주 월요일 ToDo", "다음주 화요일 ToDo", "다음주 수요일 ToDo", "다음주 목요일 ToDo", "다음주 금요일 ToDo", "다음주 토요일 ToDo", "다음주 일요일 ToDo"};
-        return days[index];
-    }
-    private String getDoneDayName(int index) {
-        String[] Done_days = {"월요일 Done", "화요일 Done", "수요일 Done", "목요일 Done", "금요일 Done", "토요일 Done", "일요일 Done",
-        		"다음주 월요일 Done", "다음주 화요일 Done", "다음주 수요일 Done", "다음주 목요일 Done", "다음주 금요일 Done", "다음주 토요일 Done", "다음주 일요일 Done"};
-        return Done_days[index];
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String selectedValue = topList.getSelectedValue(); // 선택된 항목
+
+            if (selectedValue != null) {
+                // DB에서 해당 항목의 bool 값을 업데이트 (false에서 true로)
+                try {
+                    String sql = "UPDATE plan SET bool = ? WHERE list = ?";
+                    PreparedStatement pstmt = con.prepareStatement(sql);
+                    pstmt.setBoolean(1, true); // true로 업데이트
+                    pstmt.setString(2, selectedValue);
+
+                    // 실행
+                    int rowsAffected = pstmt.executeUpdate();
+
+                    if (rowsAffected > 0) {
+                        // 성공 메시지 또는 다른 작업 수행
+                        JOptionPane.showMessageDialog(diary.this, "선택한 항목이 완료로 표시되었습니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        // 실패 메시지 또는 예외 처리
+                        JOptionPane.showMessageDialog(diary.this, "완료로 표시 실패", "실패", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    // 실패 메시지 또는 예외 처리
+                    JOptionPane.showMessageDialog(diary.this, "완료로 표시 실패: " + ex.getMessage(), "실패", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(diary.this, "완료로 표시할 항목을 선택해주세요.", "경고", JOptionPane.WARNING_MESSAGE);
+            }
+        }
     }
     
     public static void main(String[] args) {
