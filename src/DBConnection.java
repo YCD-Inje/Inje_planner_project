@@ -1,19 +1,9 @@
-<<<<<<< HEAD
-=======
-package controller;
-
->>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
 import java.sql.*;
-import java.util.ArrayList;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-<<<<<<< HEAD
-=======
-import model.diary;
->>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
 
 public class DBConnection extends JFrame{
 	private static int cnt =0;
@@ -26,7 +16,6 @@ public class DBConnection extends JFrame{
 	private static boolean isLoginFormVisible = false;
 	private static boolean isSignupFormVisible = false;
 	private PreparedStatement pstmt;
-	
 	private String loggedInUserId;
 	/**DB 연결*/
 	
@@ -143,43 +132,30 @@ public class Login extends JFrame{
 }
 	
 	public static void main(String[] args) {
-
+		
 		JFrame frame = new JFrame("로그인 화면");
 	    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	    frame.setSize(1200, 1000);
 	    frame.setLocationRelativeTo(null);
 	    frame.setLayout(new GridBagLayout());
        
-	    
 	    GridBagConstraints constraints = new GridBagConstraints();
 	    constraints.insets = new Insets(10, 10, 10, 10);
 
-<<<<<<< HEAD
 	    ImageIcon imageIcon = new ImageIcon("images/Diary.png");
-=======
-	    ImageIcon imageIcon = new ImageIcon("image/Diary.png");
->>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
 	    JLabel imageLabel = new JLabel(imageIcon);
 
 	    JPanel buttonPanel = new JPanel();
 	    buttonPanel.setLayout(new FlowLayout());
 
 	    JButton loginButton = new JButton("");
-<<<<<<< HEAD
 	    ImageIcon loginIcon = new ImageIcon("images/Login.png");
-=======
-	    ImageIcon loginIcon = new ImageIcon("image/Login.png");
->>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
 	    loginButton.setIcon(loginIcon);
 	    loginButton.setContentAreaFilled(false);
 	    loginButton.setBorder(BorderFactory.createEmptyBorder());
         
 	    JButton signupButton = new JButton("");
-<<<<<<< HEAD
 	    ImageIcon signIcon = new ImageIcon("images/Sign up.png");
-=======
-	    ImageIcon signIcon = new ImageIcon("image/Sign up.png");
->>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
 	    signupButton.setIcon(signIcon);
 	    signupButton.setContentAreaFilled(false);
 	    signupButton.setBorder(BorderFactory.createEmptyBorder());
@@ -206,24 +182,18 @@ public class Login extends JFrame{
         gbc.gridx = 1;
         loginPanel.add(idField, gbc);
 
-
 	    JLabel pwLabel = new JLabel("PW:");
 	    JPasswordField pwField = new JPasswordField(15);
 	 
         gbc.gridx = 0;
         gbc.gridy = 1;
         loginPanel.add(pwLabel, gbc);
-
         
         gbc.gridx = 1;
         loginPanel.add(pwField, gbc);
 	    
 	    JButton loginConfirmButton = new JButton("");
-<<<<<<< HEAD
 	    ImageIcon login1Icon = new ImageIcon("images/Login1.png");
-=======
-	    ImageIcon login1Icon = new ImageIcon("image/Login1.png");
->>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
 	    loginConfirmButton.setIcon(login1Icon);
 	    loginConfirmButton.setContentAreaFilled(false);
 	    loginConfirmButton.setBorder(BorderFactory.createEmptyBorder());
@@ -234,9 +204,6 @@ public class Login extends JFrame{
         loginPanel.add(loginConfirmButton, gbc);
 
 	    
-	    
-	    
-	    
 	    JPanel signupPanel = new JPanel();
 	    signupPanel.setLayout(new GridBagLayout());
 	    signupPanel.setVisible(isSignupFormVisible);
@@ -244,8 +211,6 @@ public class Login extends JFrame{
 	    GridBagConstraints gbcs = new GridBagConstraints();
         gbcs.insets.set(5 ,5 , 5 , 5); // Padding
         
-	   
-	    
 	    
 	    JLabel signupIdLabel = new JLabel("ID:");
 	    JTextField signupIdField = new JTextField(15);
@@ -330,11 +295,7 @@ public class Login extends JFrame{
 	    
 	    JPanel signupConfirmPanel = new JPanel();
 	    JButton signupConfirmButton = new JButton("");
-<<<<<<< HEAD
 	    ImageIcon Signup1Icon = new ImageIcon("images/Sign up1.png");
-=======
-	    ImageIcon Signup1Icon = new ImageIcon("image/Sign up1.png");
->>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
 	    signupConfirmButton.setIcon(Signup1Icon);
 	    signupConfirmButton.setContentAreaFilled(false);
 	    signupConfirmButton.setBorder(BorderFactory.createEmptyBorder());
@@ -392,7 +353,7 @@ public class Login extends JFrame{
 	            	dbConnection.setLoggedInUserId(userId);
 	            	frame.dispose();
 	                //TEST_home.main(new String[0]);
-	            	diary testHome = new diary(dbConnection);
+	            	Save_Planner testHome = new Save_Planner(dbConnection);
                     //testHome.setVisible(true);
 	              
 	            } else {
@@ -444,8 +405,4 @@ public class Login extends JFrame{
 
 	    frame.setVisible(true);
 	}
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> a2dfe08cf715af7c526da8acf697b7860c0d6769
