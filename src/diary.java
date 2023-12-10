@@ -17,9 +17,7 @@ public class diary extends JFrame {
     private String user = "root";
     private String password = "5641";
     private PreparedStatement pstmt;
-    private JPanel buttonPanel;
-    private JPanel contentPanel;
-    private JPanel homePanel;
+    private JPanel buttonPanel, contentPanel, homePanel;
     private String loggedInUserId;
     private DBConnection loginInstance;
     
@@ -35,7 +33,8 @@ public class diary extends JFrame {
     Font italicFont1 = new Font("Arial", Font.PLAIN, 30);
 	Font italicFont2 = new Font("Arial", Font.PLAIN, 20);
     
-	
+	private JTextField idField, nameField, departmentField, emailField, phoneField;
+    private JPasswordField currentPwField, newPwField, pwConfirmField;
 	
     public diary(DBConnection loginInstance) {
         this.loginInstance = loginInstance;
@@ -64,11 +63,114 @@ public class diary extends JFrame {
 
         setVisible(true);
     }
-
+    
+    //DB 관련 메소드
+    
     public void showLoggedInUserId() {
         System.out.println("로그인한 아이디: " + loggedInUserId);
     }
+    public void setUserInfoFromDB(String userId) {
+        try {
+            String sql = "SELECT * FROM user WHERE ID = ?";
+            pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, loginInstance.getLoggedInUserId());
+            rs = pstmt.executeQuery();
 
+            if (rs.next()) {
+                idField.setText(rs.getString("ID"));
+                nameField.setText(rs.getString("name"));
+                currentPwField.setText("");
+                newPwField.setText("");
+                pwConfirmField.setText("");
+                departmentField.setText(rs.getString("department"));
+                emailField.setText(rs.getString("email"));
+                phoneField.setText(rs.getString("phone"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    // 특정 날짜와 bool 값에 따라 해당 요일의 계획을 가져오는 메서드
+    private ArrayList<String> getPlansForDay(LocalDateTime dateTime, boolean boolValue) {
+        ArrayList<String> plans = new ArrayList<>();
+        
+        try {
+            String query = "SELECT list FROM plan WHERE DATE(data_time) = ? AND bool = ? AND user_id = ?";
+            PreparedStatement pstmt = con.prepareStatement(query);
+            pstmt.setDate(1, Date.valueOf(dateTime.toLocalDate()));
+            pstmt.setBoolean(2, boolValue);
+            pstmt.setString(3, loggedInUserId);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                String plan = rs.getString("list");
+                plans.add(plan);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "데이터베이스에서 계획을 가져오는 중 오류가 발생했습니다.");
+        }
+
+        return plans;
+    }
+    private void populateJLists(int dayIndex) {
+        LocalDateTime now = LocalDateTime.now();
+
+        // 해당 요일의 LocalDateTime 가져오기
+        int currentDayOfWeek = now.getDayOfWeek().getValue();
+        int daysUntilTargetDay = dayIndex - currentDayOfWeek + 1;
+        LocalDateTime targetDay = now.plusDays(daysUntilTargetDay);
+        targetDay = targetDay.withHour(0).withMinute(0).withSecond(0).withNano(0);
+
+        // 해당 요일의 위와 아래 JList에 대한 계획 가져오기
+        ArrayList<String> topPlans = getPlansForDay(targetDay, false); // bool 값이 false인 계획
+        ArrayList<String> bottomPlans = getPlansForDay(targetDay, true); // bool 값이 true인 계획
+
+        // 가져온 계획들을 JList에 설정
+        DefaultListModel<String> topModel = new DefaultListModel<>();
+        DefaultListModel<String> bottomModel = new DefaultListModel<>();
+
+        for (String plan : topPlans) {
+            topModel.addElement(plan);
+        }
+
+        for (String plan : bottomPlans) {
+            bottomModel.addElement(plan);
+        }
+
+        // JList 갱신
+        topDayLists[dayIndex].setModel(topModel);
+        bottomDayLists[dayIndex].setModel(bottomModel);
+    }
+    public void deletePreviousWeekData() {
+        try {
+            // 현재 날짜를 가져옴
+            LocalDate today = LocalDate.now();
+            
+            // 현재 날짜에서 일주일 전의 일요일 날짜 계산
+            LocalDate previousSunday = today.minusWeeks(1).with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
+            
+            // 이전 주 일요일 이전의 데이터 삭제하는 쿼리 작성
+            String deleteQuery = "DELETE FROM plan WHERE data_time < ?";
+
+            PreparedStatement pstmt = con.prepareStatement(deleteQuery);
+            pstmt.setObject(1, previousSunday.atStartOfDay());
+            
+            // 실행
+            int deletedRows = pstmt.executeUpdate();
+            
+            if (deletedRows > 0) {
+                System.out.println("이전 주의 데이터 삭제 완료");
+            } else {
+                System.out.println("삭제할 데이터가 없습니다.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "이전 주의 데이터 삭제 중 오류가 발생했습니다.");
+        }
+    }
+    
+    //버튼 패널
     public JPanel createButtonPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new GridLayout(5, 1));
@@ -168,7 +270,8 @@ public class diary extends JFrame {
         panel.add(editButton);
         return panel;
     }
-
+    
+    //메인 패널
     public JPanel createHomePanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
@@ -182,7 +285,7 @@ public class diary extends JFrame {
 
         return panel;
     }
-
+    //이번주 패널
     public JPanel createPlanPanel() {
         JPanel panel = new JPanel() {
         	@Override
@@ -207,7 +310,6 @@ public class diary extends JFrame {
             }
         };
         panel.setLayout(null);
-
         
         topDayLists = new JList[14]; // 요일별 ToDo 리스트를 담을 배열 (위 리스트)
         bottomDayLists = new JList[14]; // 요일별 Done 리스트를 담을 배열 (아래 리스트)
@@ -268,12 +370,11 @@ public class diary extends JFrame {
         lb[5].setForeground(Color.BLUE);
         lb[6].setForeground(Color.RED);
 
-
         panel.add(new JScrollPane(), BorderLayout.CENTER);
 
         return panel;
     }
-    
+    //다음주 패널
     public JPanel createNextPlanPanel() {
         JPanel panel = new JPanel() {
         	@Override
@@ -299,7 +400,6 @@ public class diary extends JFrame {
         };
         panel.setLayout(null);
         
-         
         topDayLists = new JList[14]; // 요일별 ToDo 리스트를 담을 배열 (위 리스트)
         bottomDayLists = new JList[14]; // 요일별 Done 리스트를 담을 배열 (아래 리스트)
         lb = new JLabel[14];
@@ -362,40 +462,10 @@ public class diary extends JFrame {
 
         return panel;
     }
-    
-    private JTextField idField, nameField;
-    private JPasswordField currentPwField, newPwField, pwConfirmField;
-    private JTextField departmentField, emailField, phoneField;
-    
-    public void setUserInfoFromDB(String userId) {
-        try {
-            String sql = "SELECT * FROM user WHERE ID = ?";
-            pstmt = con.prepareStatement(sql);
-            pstmt.setString(1, loginInstance.getLoggedInUserId());
-            rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                idField.setText(rs.getString("ID"));
-                nameField.setText(rs.getString("name"));
-                currentPwField.setText("");
-                newPwField.setText("");
-                pwConfirmField.setText("");
-                departmentField.setText(rs.getString("department"));
-                emailField.setText(rs.getString("email"));
-                phoneField.setText(rs.getString("phone"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-  
+    //수정 패널
     public JPanel createEditPanel() {
         JPanel panel = new JPanel(new GridLayout(9, 2));
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        
-     
-        
         
         JLabel idLabel = new JLabel("ID:");
         idField = new JTextField(20);
@@ -445,12 +515,10 @@ public class diary extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(editButton);
         
-        
         JButton logoutButton = new JButton("로그아웃");
         buttonPanel.add(logoutButton);
         
         panel.add(buttonPanel);
-        
         
         logoutButton.addActionListener(new ActionListener() {
             @Override
@@ -466,7 +534,6 @@ public class diary extends JFrame {
                 DBConnection.main(new String[0]);
             }
         });
-        
         editButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -534,104 +601,19 @@ public class diary extends JFrame {
                 }
             }
         });
-
         return panel;
     }
     
- // 특정 날짜와 bool 값에 따라 해당 요일의 계획을 가져오는 메서드
-    private ArrayList<String> getPlansForDay(LocalDateTime dateTime, boolean boolValue) {
-        ArrayList<String> plans = new ArrayList<>();
-        
-        try {
-            String query = "SELECT list FROM plan WHERE DATE(data_time) = ? AND bool = ? AND user_id = ?";
-            PreparedStatement pstmt = con.prepareStatement(query);
-            pstmt.setDate(1, Date.valueOf(dateTime.toLocalDate()));
-            pstmt.setBoolean(2, boolValue);
-            pstmt.setString(3, loggedInUserId);
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                String plan = rs.getString("list");
-                plans.add(plan);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "데이터베이스에서 계획을 가져오는 중 오류가 발생했습니다.");
-        }
-
-        return plans;
-    }
-
-    private void populateJLists(int dayIndex) {
-        LocalDateTime now = LocalDateTime.now();
-
-        // 해당 요일의 LocalDateTime 가져오기
-        int currentDayOfWeek = now.getDayOfWeek().getValue();
-        int daysUntilTargetDay = dayIndex - currentDayOfWeek + 1;
-        LocalDateTime targetDay = now.plusDays(daysUntilTargetDay);
-        targetDay = targetDay.withHour(0).withMinute(0).withSecond(0).withNano(0);
-
-        // 해당 요일의 위와 아래 JList에 대한 계획 가져오기
-        ArrayList<String> topPlans = getPlansForDay(targetDay, false); // bool 값이 false인 계획
-        ArrayList<String> bottomPlans = getPlansForDay(targetDay, true); // bool 값이 true인 계획
-
-        // 가져온 계획들을 JList에 설정
-        DefaultListModel<String> topModel = new DefaultListModel<>();
-        DefaultListModel<String> bottomModel = new DefaultListModel<>();
-
-        for (String plan : topPlans) {
-            topModel.addElement(plan);
-        }
-
-        for (String plan : bottomPlans) {
-            bottomModel.addElement(plan);
-        }
-
-        // JList 갱신
-        topDayLists[dayIndex].setModel(topModel);
-        bottomDayLists[dayIndex].setModel(bottomModel);
-    }
-    
-    public void deletePreviousWeekData() {
-        try {
-            // 현재 날짜를 가져옴
-            LocalDate today = LocalDate.now();
-            
-            // 현재 날짜에서 일주일 전의 일요일 날짜 계산
-            LocalDate previousSunday = today.minusWeeks(1).with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
-            
-            // 이전 주 일요일 이전의 데이터 삭제하는 쿼리 작성
-            String deleteQuery = "DELETE FROM plan WHERE data_time < ?";
-
-            PreparedStatement pstmt = con.prepareStatement(deleteQuery);
-            pstmt.setObject(1, previousSunday.atStartOfDay());
-            
-            // 실행
-            int deletedRows = pstmt.executeUpdate();
-            
-            if (deletedRows > 0) {
-                System.out.println("이전 주의 데이터 삭제 완료");
-            } else {
-                System.out.println("삭제할 데이터가 없습니다.");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "이전 주의 데이터 삭제 중 오류가 발생했습니다.");
-        }
-    }
-    
- // '추가' 버튼 액션 리스너 클래스
+    //추가 삭제 이동 버튼 리스너
+    // '추가' 버튼 액션 리스너 클래스
     class AddButtonAction implements ActionListener {
         private int dayIndex; // 요일 인덱스 (0부터 13까지)
-
         public AddButtonAction(int dayIndex) {
             this.dayIndex = dayIndex;
         }
-
         @Override
         public void actionPerformed(ActionEvent e) {
             String userID = loggedInUserId; // 로그인한 유저 아이디
-
 
             // 추가하고자 하는 항목 (다이얼로그를 통해 사용자로부터 입력 받음)
             String newItem = JOptionPane.showInputDialog("일정 내용을 입력하세요:");
@@ -639,13 +621,11 @@ public class diary extends JFrame {
             // 요일별로 datetime 값 계산
             LocalDateTime dateTime = calculateDayDate(dayIndex); // dayIndex는 해당 요일의 인덱스(0부터 6까지)
 
-            
             // 입력이 취소되거나 아무것도 입력하지 않았을 때의 처리
             if (newItem == null || newItem.trim().isEmpty()) {
                 JOptionPane.showMessageDialog(diary.this, "내용을 입력하세요.", "경고", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
             // DB에 데이터 삽입
             try {
                 String sql = "INSERT INTO plan (user_id, data_time, list, bool) VALUES (?, ?, ?, ?)";
@@ -671,8 +651,7 @@ public class diary extends JFrame {
                 JOptionPane.showMessageDialog(diary.this, "일정 추가 실패: " + ex.getMessage(), "실패", JOptionPane.ERROR_MESSAGE);
             }
         }
-
-     // 해당 요일의 날짜를 계산하는 메서드
+        // 해당 요일의 날짜를 계산하는 메서드
         private LocalDateTime calculateDayDate(int dayIndex) {
             LocalDateTime now = LocalDateTime.now(); // 현재 날짜와 시간
             DayOfWeek today = now.getDayOfWeek(); // 현재 요일
@@ -681,25 +660,22 @@ public class diary extends JFrame {
             if (today.getValue() == dayIndex + 1) { // dayIndex는 0부터 시작하기 때문에 요일 값에 +1 해줍니다.
                 return now;
             }
-
             // 현재 날짜에서 해당 요일로 이동하기 위해 추가로 필요한 일 수 계산
             int daysToAdd = dayIndex + 1 - today.getValue();
             if (daysToAdd < 0) {
                 daysToAdd += 7; // 해당 요일이 오늘보다 이전이라면 다음 주의 해당 요일로 계산
             }
-
             // 계산된 일 수를 더하여 해당 요일의 날짜를 계산
             return now.plusDays(daysToAdd).toLocalDate().atStartOfDay();
         }
     }
- // '삭제' 버튼 액션 리스너 클래스
+    // '삭제' 버튼 액션 리스너 클래스
     class DeleteButtonAction implements ActionListener {
         private JList<String> list; // 해당 요일의 리스트
 
         public DeleteButtonAction(JList<String> list) {
             this.list = list;
         }
-
         @Override
         public void actionPerformed(ActionEvent e) {
             String selectedValue = list.getSelectedValue(); // 선택된 항목
@@ -710,7 +686,6 @@ public class diary extends JFrame {
                     String sql = "DELETE FROM plan WHERE list = ?";
                     PreparedStatement pstmt = con.prepareStatement(sql);
                     pstmt.setString(1, selectedValue);
-
                     // 실행
                     int rowsAffected = pstmt.executeUpdate();
 
@@ -726,12 +701,10 @@ public class diary extends JFrame {
                     // 실패 메시지 또는 예외 처리
                     JOptionPane.showMessageDialog(diary.this, "항목 삭제 실패: " + ex.getMessage(), "실패", JOptionPane.ERROR_MESSAGE);
                 }
-            } else {
-            	
             }
         }
     }
- // 'Clear' 버튼 액션 리스너 클래스
+    // 'Clear' 버튼 액션 리스너 클래스
     class MoveButtonAction implements ActionListener {
         private JList<String> topList; // 상단 리스트
         private JList<String> bottomList; // 하단 리스트
@@ -740,7 +713,6 @@ public class diary extends JFrame {
             this.topList = topList;
             this.bottomList = bottomList;
         }
-
         @Override
         public void actionPerformed(ActionEvent e) {
             String selectedValue = topList.getSelectedValue(); // 선택된 항목
@@ -752,7 +724,6 @@ public class diary extends JFrame {
                     PreparedStatement pstmt = con.prepareStatement(sql);
                     pstmt.setBoolean(1, true); // true로 업데이트
                     pstmt.setString(2, selectedValue);
-
                     // 실행
                     int rowsAffected = pstmt.executeUpdate();
 
@@ -773,7 +744,7 @@ public class diary extends JFrame {
             }
         }
     }
-    
+    //클래스 실행
     public static void main(String[] args) {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -782,9 +753,7 @@ public class diary extends JFrame {
             JOptionPane.showMessageDialog(null, "JDBC 드라이버를 찾을 수 없습니다.");
             System.exit(1);
         }
-        
         DBConnection loginInstance = new DBConnection();
-
         new diary(loginInstance);
     }
 }
