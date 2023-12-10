@@ -1,5 +1,6 @@
-package test;
+package model;
 
+import controller.DBConnection;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,16 +14,17 @@ public class diary extends JFrame {
     private ResultSet rs;
 	private String url = "jdbc:mysql://localhost:3306/inje?severTimezon=UTC";
     private String user = "root";
-    private String password = "0000";
+    private String password = "chlwnsgur1!";
     private PreparedStatement pstmt;
-    private JFrame frame;
+    private JFrame frame = new JFrame("수정창");
     private JPanel buttonPanel;
     private JPanel contentPanel;
     private JPanel homePanel;
     private String loggedInUserId;
-    private Login loginInstance;
-
-    public diary(Login loginInstance) {
+    private DBConnection loginInstance;
+    
+    
+    public diary(DBConnection loginInstance) {
         this.loginInstance = loginInstance;
         this.loggedInUserId = loginInstance.getLoggedInUserId();
         System.out.println("로그인 한 아이디: " + loggedInUserId);
@@ -37,7 +39,7 @@ public class diary extends JFrame {
         
         setTitle("Inje Weekly Planner");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 800);
+        setSize(1200, 800);
         setLayout(new BorderLayout());
 
         buttonPanel = createButtonPanel();
@@ -56,12 +58,41 @@ public class diary extends JFrame {
 
     public JPanel createButtonPanel() {
         JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(3, 1));
-
-        JButton homeButton = new JButton("HOME");
-        JButton planButton = new JButton("PLAN");
-        JButton editButton = new JButton("EDIT");
-
+        panel.setLayout(new GridLayout(5, 1));
+        
+        
+        ImageIcon Diary = new ImageIcon("image/Diary.png");
+        
+        JButton homeButton = new JButton();
+        ImageIcon mainIcon = new ImageIcon("image/_Home.png");
+        homeButton.setIcon(mainIcon);
+        homeButton.setContentAreaFilled(false);
+        homeButton.setBorder(BorderFactory.createEmptyBorder());
+        
+        
+        JButton thisButton = new JButton("");
+        ImageIcon thisIcon = new ImageIcon("image/This_Week.png");
+        thisButton.setIcon(thisIcon);
+        thisButton.setContentAreaFilled(false);
+        thisButton.setBorder(BorderFactory.createEmptyBorder());
+        
+        
+        
+        
+        JButton nextButton = new JButton("");
+        ImageIcon nextIcon = new ImageIcon("image/Next_Week.png");
+        nextButton.setIcon(nextIcon);
+        nextButton.setContentAreaFilled(false);
+        nextButton.setBorder(BorderFactory.createEmptyBorder());
+        
+      
+        JButton editButton = new JButton();
+        ImageIcon editIcon = new ImageIcon("image/_Settings.png");
+        editButton.setIcon(editIcon);
+        editButton.setContentAreaFilled(false);
+        editButton.setBorder(BorderFactory.createEmptyBorder());
+        
+       
         homeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -74,7 +105,7 @@ public class diary extends JFrame {
             }
         });
 
-        planButton.addActionListener(new ActionListener() {
+        thisButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 contentPanel.removeAll();
@@ -85,7 +116,19 @@ public class diary extends JFrame {
                 System.out.print(loginInstance.getLoggedInUserId() + "\n");
             }
         });
-
+        
+        nextButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                contentPanel.removeAll();
+                contentPanel.add(createPlanPanel(), BorderLayout.CENTER);
+                contentPanel.revalidate();
+                contentPanel.repaint();
+                
+                System.out.print(loginInstance.getLoggedInUserId() + "\n");
+            }
+        });
+        
         editButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -97,10 +140,21 @@ public class diary extends JFrame {
                 System.out.print(loginInstance.getLoggedInUserId() + "\n");
             }
         });
-
+        int width = Diary.getIconWidth();
+		int height = Diary.getIconHeight();
+		int newWidth = 110;
+		int newHeight = 100;
+		
+		
+        ImageIcon resizedIcon = new ImageIcon(Diary.getImage().getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH));
+        
+        panel.add(new JLabel(resizedIcon));
+     
         panel.add(homeButton);
-        panel.add(planButton);
+        panel.add(thisButton);
+        panel.add(nextButton);
         panel.add(editButton);
+        
 
         return panel;
     }
@@ -160,10 +214,14 @@ public class diary extends JFrame {
         }
     }
 
+  
     public JPanel createEditPanel() {
         JPanel panel = new JPanel(new GridLayout(9, 2));
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
-
+        
+     
+        
+        
         JLabel idLabel = new JLabel("ID:");
         idField = new JTextField(20);
         idField.setEditable(false);
@@ -213,6 +271,35 @@ public class diary extends JFrame {
         buttonPanel.add(editButton);
         panel.add(new JLabel());
         panel.add(buttonPanel);
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        JButton logoutButton = new JButton("로그아웃");
+        panel.add(logoutButton);
+        
+        
+        
+        logoutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	
+                DBConnection dbConnection = new DBConnection();
+                dbConnection.connect();
+                dbConnection.setLoggedInUserId(null);
+                
+
+                // 수정된 부분: main 메서드를 클래스 이름을 통해 정적으로 호출
+                DBConnection.main(new String[0]);
+            }
+        });
+
+
         
         editButton.addActionListener(new ActionListener() {
             @Override
@@ -294,7 +381,7 @@ public class diary extends JFrame {
             System.exit(1);
         }
         
-        Login loginInstance = new Login();
+        DBConnection loginInstance = new DBConnection();
 
         new diary(loginInstance);
     }
